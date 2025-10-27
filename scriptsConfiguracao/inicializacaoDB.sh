@@ -37,7 +37,7 @@ CREATE TABLE Enderecos (
 );
 
 CREATE TABLE Empresa (
-    Id_Empresa INT AUTO_INCREMENT PRIMARY KEY ,
+    Id_Empresa INT AUTO_INCREMENT PRIMARY KEY,
     Nome_Empresa VARCHAR(255),
     Cnpj VARCHAR(255) UNIQUE,
     Fk_Endereco INT,
@@ -59,15 +59,15 @@ CREATE TABLE Usuario (
     Email VARCHAR(255) UNIQUE,
     Senha VARCHAR(255),
     Fk_Empresa INT,
-    Fk_Cargo INT, 
+    Fk_Cargo INT,
     CONSTRAINT FK_Usuario_Empresa
         FOREIGN KEY (Fk_Empresa) REFERENCES Empresa(Id_Empresa),
-    CONSTRAINT FK_Usuario_Cargo 
+    CONSTRAINT FK_Usuario_Cargo
         FOREIGN KEY (Fk_Cargo) REFERENCES Cargo(Id_Cargo)
 );
 
 CREATE TABLE Caixa (
-    Id_Caixa INT AUTO_INCREMENT PRIMARY KEY,  
+    Id_Caixa INT AUTO_INCREMENT PRIMARY KEY,
     codigoCaixa VARCHAR(12) UNIQUE,
     Fk_Endereco_Maquina INT,
     Fk_Empresa INT,
@@ -78,17 +78,32 @@ CREATE TABLE Caixa (
 );
 
 CREATE TABLE Componentes (
-    Id_Componente INT AUTO_INCREMENT PRIMARY KEY not null,
-    Nome_Componente VARCHAR(255) not null,
-    Fk_Caixa INT not null,
+    Id_Componente INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    Nome_Componente VARCHAR(255) NOT NULL,
     Unidade VARCHAR(20),
-    CONSTRAINT FK_Componentes_Caixa
-        FOREIGN KEY (Fk_Caixa) REFERENCES Caixa(Id_Caixa) 
+    Fk_Empresa INT NOT NULL,
+    CONSTRAINT FK_Componentes_Empresa
+        FOREIGN KEY (Fk_Empresa) REFERENCES Empresa(Id_Empresa)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE Caixa_Componente (
+    Id_Caixa_Componente INT AUTO_INCREMENT PRIMARY KEY,
+    Fk_Caixa INT NOT NULL,
+    Fk_Componente INT NOT NULL,
+    Data_Associacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_CaixaComponente_Caixa
+        FOREIGN KEY (Fk_Caixa) REFERENCES Caixa(Id_Caixa)
+        ON DELETE CASCADE,
+    CONSTRAINT FK_CaixaComponente_Componente
+        FOREIGN KEY (Fk_Componente) REFERENCES Componentes(Id_Componente)
+        ON DELETE CASCADE,
+    CONSTRAINT UK_Caixa_Componente UNIQUE (Fk_Caixa, Fk_Componente)
 );
 
 CREATE TABLE Parametros (
     Id_Parametro INT AUTO_INCREMENT PRIMARY KEY,
-    Valor_Parametrizado INT not null,
+    Valor_Parametrizado INT NOT NULL,
     Fk_Componente INT,
     CONSTRAINT FK_Parametros_Componentes
         FOREIGN KEY (Fk_Componente) REFERENCES Componentes(Id_Componente)
@@ -103,7 +118,7 @@ CREATE TABLE Permissao (
 CREATE TABLE CargoPermissao (
     Fk_Cargo INT NOT NULL,
     Fk_Permissao INT NOT NULL,
-    CONSTRAINT PK_CargoPermissao 
+    CONSTRAINT PK_CargoPermissao
         PRIMARY KEY (Fk_Cargo, Fk_Permissao),
     CONSTRAINT FK_CargoPermissao_Cargo
         FOREIGN KEY (Fk_Cargo) REFERENCES Cargo(Id_Cargo),
@@ -138,12 +153,19 @@ INSERT INTO Caixa (codigoCaixa, Fk_Empresa, Fk_Endereco_Maquina) VALUES
 ('CX101', 2, 3),
 ('CX201', 3, 4);
 
-INSERT INTO Componentes (Nome_Componente, Unidade, Fk_Caixa) VALUES
+INSERT INTO Componentes (Nome_Componente, Unidade, Fk_Empresa) VALUES
 ('CPU', '%', 1),
 ('Disco', '%', 1),
-('Memória', '%', 2),
-('CPU', '%', 3),
-('Memória', '%', 4);
+('Memória', '%', 1),
+('CPU', '%', 2),
+('Memória', '%', 3);
+
+INSERT INTO Caixa_Componente (Fk_Caixa, Fk_Componente) VALUES
+(1, 1),  -- CX001 usa CPU (empresa 1)
+(1, 2),  -- CX001 usa Disco
+(2, 3),  -- CX002 usa Memória
+(3, 4),  -- CX101 usa CPU
+(4, 5);  -- CX201 usa Memória
 
 INSERT INTO Parametros (Valor_Parametrizado, Fk_Componente) VALUES
 (75, 1),
